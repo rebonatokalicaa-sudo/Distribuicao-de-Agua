@@ -15,6 +15,7 @@ Projeto prático de **Estrutura de Dados (Teoria de Grafos)** que simula uma red
 ### 🛠️ Interface do Terminal (Painel de Controle C++)
 
 ![Interface do Terminal C++]
+
 <img width="729" height="696" alt="image" src="https://github.com/user-attachments/assets/b6e8c413-6a30-472a-92b9-4bba56d25c09" />
 
 
