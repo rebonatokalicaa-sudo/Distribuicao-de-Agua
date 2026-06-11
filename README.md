@@ -18,7 +18,7 @@ Projeto prático de **Estrutura de Dados (Teoria de Grafos)** que simula uma red
 <img width="729" height="696" alt="image" src="https://github.com/user-attachments/assets/b6e8c413-6a30-472a-92b9-4bba56d25c09" />
 
 
-Console nativo em CPU para controle operacional da malha através de menu numérico. O destaque é a **Opção 12**, que edita pesos (tempo) e capacidades (vazão) de canos ao vivo, forçando o recálculo imediato do sistema antes dos diagnósticos estruturais.
+Console nativo em CPU para controle operacional da malha através de menu numérico.
 
 ### 💧 Interface Gráfica Dinâmica (Monitor HTML/SVG)
 
