@@ -5,10 +5,26 @@ Projeto prático de **Estrutura de Dados (Teoria de Grafos)** que simula uma red
 ## 🚀 Funcionalidades Principais
 
 - **Modelagem Avançada:** Representação por Lista de Adjacência para máxima eficiência de memória (Grafo Esparso).
-- **Diagnóstico de Abastecimento (BFS):** Varredura em largura a partir da ETA para identificar pontos sem água ou em estado de emergência.
-- **Integridade Estrutural (DFS):** Algoritmo recursivo para detectar a divisão da rede em componentes conexas isoladas.
-- **Rotas de Contingência (Dijkstra Otimizado):** Cálculo imediato do caminho de menor tempo para locais críticos, utilizando uma **Fila de Prioridade (Min-Heap)** para alcançar complexidade $O(E \log V)$.
-- **Simulação Dinâmica:** Opções para simular rompimento de tubulações, restauração de fluxo e edição de propriedades físicas (tempo e vazão em L/s) ao vivo no terminal.
+- **Diagnóstico (BFS):** Varredura em largura a partir da ETA para identificar pontos desabastecidos.
+- **Integridade (DFS):** Algoritmo recursivo para detectar a fragmentação da rede em componentes isoladas.
+- **Contingência (Dijkstra):** Rota de menor tempo para locais críticos via **Fila de Prioridade (Min-Heap)** em $O(E \log V)$.
+- **Simulação Ativa:** Rompimento, restauração e edição de propriedades físicas (tempo e vazão em L/s) ao vivo.
+
+## 📸 Demonstração do Sistema
+
+### 🛠️ Interface do Terminal (Painel de Controle C++)
+
+![Interface do Terminal C++](<img width="744" height="710" alt="image" src="https://github.com/user-attachments/assets/f9e94e77-0ca2-4106-9043-8b8122d44dd6" />)
+
+Console nativo em CPU para controle operacional da malha através de menu numérico. O destaque é a **Opção 12**, que edita pesos (tempo) e capacidades (vazão) de canos ao vivo, forçando o recálculo imediato do sistema antes dos diagnósticos estruturais.
+
+### 💧 Interface Gráfica Dinâmica (Monitor HTML/SVG)
+
+![Monitor de Rede HTML/SVG](<img width="1586" height="756" alt="image" src="https://github.com/user-attachments/assets/e1690367-770d-4301-a41e-643d5deae6d3" />
+)
+
+
+Visualização síncrona gerada de forma autônoma pelo C++ via arquivo `.html`. Exibe o estado lógico da memória RAM em tempo real: nós ativos validados pelo BFS, pulsação de emergência em locais críticos desabastecidos, linhas roxas com o caminho mínimo do Dijkstra e tracejados vermelhos indicando canos rompidos.
 
 ## 🛠️ Tecnologias Utilizadas
 
@@ -29,9 +45,6 @@ Projeto prático de **Estrutura de Dados (Teoria de Grafos)** que simula uma red
 - **Bloco 2 (Linhas 57-120):** Classe Grafo, Lista de Adjacência e Controle de Fluxo.
 - **Bloco 3 (Linhas 121-169):** Algoritmo e Execução da Busca em Largura (BFS).
 - **Bloco 4 (Linhas 170-219):** Algoritmo e Execução da Busca em Profundidade (DFS).
-- **Bloco 5 (Linhas 220-272):** Inteligência e Otimização do Algoritmo de Dijkstra.
+- **Bloco 5 (Linhas 220-272):** Inteligência e Otimização do Algoritmo de Dijkstra (Min-Heap).
 - **Bloco 6 (Linhas 280-480):** Motor de Renderização e Escrita do Arquivo HTML/SVG.
 - **Bloco 7 (Linhas 504 ao Fim):** Instanciação da Cidade, Orquestração e Menu Principal.
-
-- <img width="790" height="695" alt="image" src="https://github.com/user-attachments/assets/5befabc6-0634-4a93-bdec-e76942f9affd" />
-
