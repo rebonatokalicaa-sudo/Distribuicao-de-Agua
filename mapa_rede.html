@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Simulador de Agua - Sao Cristovao</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',sans-serif;background:#111;color:#e2e8f0;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+/* HEADER */
+header{background:#1a1a2e;border-bottom:1px solid #2a2a4a;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{font-size:20px;}
+.logo-title{font-size:14px;font-weight:700;letter-spacing:.3px;}
+.logo-sub{font-size:10px;color:#64748b;margin-top:1px;font-family:monospace;}
+.badges{display:flex;gap:6px;}
+.badge{font-size:11px;padding:3px 10px;border-radius:4px;font-weight:600;font-family:monospace;}
+.badge-ok  {background:#14532d;color:#86efac;border:1px solid #166534;}
+.badge-warn{background:#78350f;color:#fcd34d;border:1px solid #92400e;}
+.badge-err {background:#7f1d1d;color:#fca5a5;border:1px solid #991b1b;}
+/* MAIN */
+.main{display:grid;grid-template-columns:1fr 300px;flex:1;overflow:hidden;}
+/* CANVAS */
+.canvas-wrap{position:relative;overflow:hidden;background:#111;
+  background-image:linear-gradient(rgba(42,42,74,.35) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(42,42,74,.35) 1px,transparent 1px);
+  background-size:36px 36px;}
+svg{width:100%;height:100%;display:block;}
+/* SIDEBAR */
+.sidebar{background:#1a1a2e;border-left:1px solid #2a2a4a;display:flex;flex-direction:column;overflow:hidden;}
+.sidebar-tabs{display:flex;border-bottom:1px solid #2a2a4a;flex-shrink:0;}
+.tab-btn{flex:1;padding:9px 4px;font-size:11px;font-weight:600;font-family:monospace;
+  background:none;border:none;color:#475569;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;}
+.tab-btn.active{color:#38bdf8;border-bottom-color:#38bdf8;}
+.tab-content{display:none;flex:1;overflow-y:auto;padding:12px;flex-direction:column;gap:8px;}
+.tab-content.active{display:flex;}
+/* PIPES */
+.sec-label{font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:1px;font-family:monospace;}
+.pipe-item{display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:6px;
+  cursor:pointer;border:1px solid #2a2a4a;background:#111;transition:all .15s;font-size:11px;}
+.pipe-item:hover{border-color:#3b4a6b;background:#1e2a45;}
+.pipe-item.removed{border-color:#7f1d1d;background:#1a0a0a;opacity:.85;}
+.pipe-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.pipe-name{font-family:monospace;font-size:11px;font-weight:600;flex:1;}
+.pipe-cap{font-family:monospace;font-size:10px;color:#64748b;}
+/* STATS */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.stat-card{background:#111;border:1px solid #2a2a4a;border-radius:6px;padding:8px 10px;}
+.stat-label{font-size:10px;color:#64748b;font-family:monospace;margin-bottom:2px;}
+.stat-val{font-size:22px;font-weight:700;font-family:monospace;}
+.stat-ok  {color:#22c55e;}.stat-warn{color:#f59e0b;}.stat-err{color:#ef4444;}
+/* LOG */
+.log-box{background:#0a0a16;border:1px solid #2a2a4a;border-radius:6px;padding:8px 10px;
+  font-family:monospace;font-size:10px;max-height:130px;overflow-y:auto;flex-shrink:0;}
+.log-line{padding:1px 0;line-height:1.5;}
+.log-line.ok  {color:#86efac;}.log-line.warn{color:#fcd34d;}.log-line.err{color:#fca5a5;}.log-line.info{color:#64748b;}
+/* ALGO */
+.algo-btns{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.algo-btn{padding:7px 5px;font-size:10px;font-weight:600;font-family:monospace;
+  background:#111;border:1px solid #2a2a4a;color:#e2e8f0;border-radius:5px;cursor:pointer;transition:all .15s;}
+.algo-btn:hover{background:#1e3a5f;border-color:#3b82f6;color:#38bdf8;}
+.algo-btn.full{grid-column:1/-1;background:#1d3461;border-color:#3b82f6;color:#38bdf8;}
+.algo-output{background:#0a0a16;border:1px solid #2a2a4a;border-radius:6px;padding:10px 12px;
+  font-family:monospace;font-size:10px;line-height:1.7;overflow-y:auto;white-space:pre-wrap;
+  color:#94a3b8;min-height:100px;flex:1;}
+.ao-title{color:#06b6d4;font-weight:700;}
+.ao-ok   {color:#22c55e;}.ao-warn{color:#f59e0b;}.ao-err{color:#ef4444;}.ao-path{color:#3b82f6;}.ao-num{color:#c084fc;}
+/* ALERT */
+.alert-banner{position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  background:#7f1d1d;border:1px solid #ef4444;border-radius:7px;padding:7px 18px;
+  font-family:monospace;font-size:12px;font-weight:700;color:#fca5a5;z-index:10;
+  animation:pulse 1.2s infinite;}
+@keyframes pulse{0%,100%{border-color:#ef4444;}50%{border-color:#fca5a5;}}
+/* TOOLTIP */
+.tooltip{position:absolute;pointer-events:none;background:#1a1a2e;border:1px solid #3b4a6b;
+  border-radius:7px;padding:9px 13px;font-family:monospace;font-size:11px;color:#e2e8f0;
+  box-shadow:0 6px 24px rgba(0,0,0,.5);display:none;z-index:20;min-width:170px;}
+.tt-name{font-weight:700;font-size:13px;margin-bottom:3px;}
+.tt-row{color:#64748b;font-size:10px;line-height:1.6;}
+/* LEGEND */
+.legend{display:flex;flex-direction:column;gap:4px;}
+.leg-item{display:flex;align-items:center;gap:7px;font-size:10px;color:#64748b;}
+.leg-pipe{width:18px;height:3px;border-radius:2px;flex-shrink:0;}
+.leg-dot {width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+/* RESET BTN */
+.reset-btn{font-family:monospace;font-size:10px;padding:5px 10px;border-radius:5px;
+  border:1px solid #2a2a4a;background:transparent;color:#64748b;cursor:pointer;transition:all .15s;width:100%;}
+.reset-btn:hover{border-color:#22c55e;color:#22c55e;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#2a2a4a;border-radius:2px;}
+</style>
+</head>
+<body>
+<header>
+  <div class='logo'><span class='logo-icon'>💧</span><div><div class='logo-title'>Simulador de Rede de Agua &mdash; Sao Cristovao</div><div class='logo-sub'>Estrutura de Dados &bull; Grafos em C++</div></div></div>
+  <div class='badges'>
+    <span class='badge badge-ok'>Criticos: 3/3</span>
+    <span class='badge badge-ok'>Bairros: 5/5</span>
+    <span class='badge badge-ok'>Canos: 15 ativos</span>
+  </div>
+</header>
+<div class='main'>
+<div class='canvas-wrap' id='canvas'>
+<svg id='svg' viewBox='0 0 900 560' xmlns='http://www.w3.org/2000/svg'>
+<defs>
+  <marker id='arr' viewBox='0 0 10 10' refX='8' refY='5' markerWidth='5' markerHeight='5' orient='auto-start-reverse'><path d='M2 1L8 5L2 9' fill='none' stroke='context-stroke' stroke-width='1.5' stroke-linecap='round'/></marker>
+  <filter id='glow'><feGaussianBlur stdDeviation='3' result='b'/><feMerge><feMergeNode in='b'/><feMergeNode in='SourceGraphic'/></feMerge></filter>
+</defs>
+<line x1='72' y1='280' x2='252' y2='112' stroke='#3B8BD4' stroke-width='2.5'  stroke-opacity='1' marker-end='url(#arr)' style='cursor:pointer' onclick='toggleEdge(0,1)' onmouseenter='showEdgeTip(event,0,1,80)' onmouseleave='hideTip()'/>
+<text x='170.188' y='204.773' text-anchor='middle' dominant-baseline='central' font-size='9' font-family='monospace' fill='#3B8BD4' opacity='1' style='pointer-events:none'>80L/s</text>
+<line x1='72' y1='280' x2='252' y2='436.8' stroke='#3B8BD4' stroke-width='2.5'  stroke-opacity='1' marker-end='url(#arr)' style='cursor:pointer' onclick='toggleEdge(0,2)' onmouseenter='showEdgeTip(event,0,2,60)' onmouseleave='hideTip()'/>
+<text x='154.118' y='367.448' text-anchor='middle' dominant-baseline='central' font-size='9' font-family='monospace' fill='#3B8BD4' opacity='1' style='pointer-events:none'>60L/s</text>
+<line x1='252' y1='112' x2='468' y2='84' stroke='#3B8BD4' stroke-width='2.5'  stroke-opacity='1' marker-end='url(#arr)' style='cursor:pointer' onclick='toggleEdge(1,3)' onmouseenter='showEdgeTip(event,1,3,40)' onmouseleave='hideTip()'/>
+<text x='361.543' y='109.9' text-anchor='middle' dominant-baseline='central' font-size='9' font-family='monospace' fill='#3B8BD4' opacity='1' style='pointer-events:none'>40L/s</text>
+<line x1='252' y1='112' x2='468' y2='212.8' stroke='#3B8BD4' stroke-width='2.5'  stroke-opacity='1' marker-end='url(#arr)' style='cursor:pointer' onclick='toggleEdge(1,4)' onmouseenter='showEdgeTip(event,1,4,20)' onmouseleave='hideTip()'/>
+<text x='354.925' y='173.274' text-anchor='middle' dominant-baseline='central' font-size='9' font-family='monospace' fill='#3B8BD4' opacity='1' style='pointer-events:none'>20L/s</text>
+<line x1='252' y1='112' x2='468' y2='336' stroke='#3B8BD4' stroke-width='2.5'  stroke-opacity='1' marker-end='url(#arr)' style='cursor:pointer' onclick='toggleEdge(1,5)' onmouseenter='showEdgeTip(event,1,5,15)' onmouseleave='hideTip()'/>
+<text x='351.362' y='232.33' text-anchor='middle' dominant-baseline='central' font-size='9' font-family='monospace' fill='#3B8BD4' opacity='1' style='pointer-events:none'>15L/s</text>
+<line x1='252' y1='112' x2='648' y2='156.8' stroke='#3B8BD4' stroke-width='2.5'  stroke-opacity='1' marker-end='url(#arr)' style='cursor:pointer' onclick='toggleEdge(1,6)' onmouseenter='showEdgeTip(event,1,6,50)' onmouseleave='hideTip()'/>
+<text x='448.651' y='146.324' text-anchor='middle' dominant-baseline='central' font-size='9' font-family='monospace' fill='#3B8BD4' opacity='1' style='pointer-events:none'>50L/s</text>
+<line x1='252' y1='112' x2='810' y2='112' stroke='#3B8BD4' stroke-width='2.5'  stroke-opacity='1' marker-end='url(#arr)' style='cursor:pointer' onclick='toggleEdge(1,9)' onmouseenter='showEdgeTip(event,1,9,25)' onmouseleave='hideTip()'/>
+<text x='531' y='124' text-anchor='middle' dominant-baseline='central' font-size='9' font-family='monospace' fill='#3B8BD4' opacity='1' style='pointer-events:none'>25L/s</text>
+<line x1='252' y1='436.8' x2='648' y2='156.8' stroke='#3B8BD4' stroke-width='2.5'  stroke-opacity='1' marker-end='url(#arr)' style='cursor:pointer' onclick='toggleEdge(2,6)' onmouseenter='showEdgeTip(event,2,6,40)' onmouseleave='hideTip()'/>
+<text x='456.928' y='306.598' text-anchor='middle' dominant-baseline='central' font-size='9' font-family='monospace' fill='#3B8BD4' opacity='1' style='pointer-events:none'>40L/s</text>
+<line x1='252' y1='436.8' x2='648' y2='280' stroke='#3B8BD4' stroke-width='2.5'  stroke-opacity='1' marker-end='url(#arr)' style='cursor:pointer' onclick='toggleEdge(2,7)' onmouseenter='showEdgeTip(event,2,7,35)' onmouseleave='hideTip()'/>
+<text x='454.418' y='369.557' text-anchor='middle' dominant-baseline='central' font-size='9' font-family='monospace' fill='#3B8BD4' opacity='1' style='pointer-events:none'>35L/s</text>
+<line x1='252' y1='436.8' x2='810' y2='476' stroke='#3B8BD4' stroke-width='2.5'  stroke-opacity='1' marker-end='url(#arr)' style='cursor:pointer' onclick='toggleEdge(2,10)' onmouseenter='showEdgeTip(event,2,10,20)' onmouseleave='hideTip()'/>
+<text x='530.159' y='468.37' text-anchor='middle' dominant-baseline='central' font-size='9' font-family='monospace' fill='#3B8BD4' opacity='1' style='pointer-events:none'>20L/s</text>
+<line x1='468' y1='84' x2='648' y2='156.8' stroke='#3B8BD4' stroke-width='2.5'  stroke-opacity='1' marker-end='url(#arr)' style='cursor:pointer' onclick='toggleEdge(3,6)' onmouseenter='showEdgeTip(event,3,6,30)' onmouseleave='hideTip()'/>
+<text x='553.501' y='131.525' text-anchor='middle' dominant-baseline='central' font-size='9' font-family='monospace' fill='#3B8BD4' opacity='1' style='pointer-events:none'>30L/s</text>
+<line x1='648' y1='156.8' x2='648' y2='280' stroke='#3B8BD4' stroke-width='2.5'  stroke-opacity='1' marker-end='url(#arr)' style='cursor:pointer' onclick='toggleEdge(6,7)' onmouseenter='showEdgeTip(event,6,7,25)' onmouseleave='hideTip()'/>
+<text x='636' y='218.4' text-anchor='middle' dominant-baseline='central' font-size='9' font-family='monospace' fill='#3B8BD4' opacity='1' style='pointer-events:none'>25L/s</text>
+<line x1='648' y1='156.8' x2='648' y2='403.2' stroke='#3B8BD4' stroke-width='2.5'  stroke-opacity='1' marker-end='url(#arr)' style='cursor:pointer' onclick='toggleEdge(6,8)' onmouseenter='showEdgeTip(event,6,8,20)' onmouseleave='hideTip()'/>
+<text x='636' y='280' text-anchor='middle' dominant-baseline='central' font-size='9' font-family='monospace' fill='#3B8BD4' opacity='1' style='pointer-events:none'>20L/s</text>
+<line x1='648' y1='280' x2='648' y2='403.2' stroke='#3B8BD4' stroke-width='2.5'  stroke-opacity='1' marker-end='url(#arr)' style='cursor:pointer' onclick='toggleEdge(7,8)' onmouseenter='showEdgeTip(event,7,8,15)' onmouseleave='hideTip()'/>
+<text x='636' y='341.6' text-anchor='middle' dominant-baseline='central' font-size='9' font-family='monospace' fill='#3B8BD4' opacity='1' style='pointer-events:none'>15L/s</text>
+<line x1='648' y1='403.2' x2='810' y2='476' stroke='#3B8BD4' stroke-width='2.5'  stroke-opacity='1' marker-end='url(#arr)' style='cursor:pointer' onclick='toggleEdge(8,10)' onmouseenter='showEdgeTip(event,8,10,10)' onmouseleave='hideTip()'/>
+<text x='724.081' y='450.546' text-anchor='middle' dominant-baseline='central' font-size='9' font-family='monospace' fill='#3B8BD4' opacity='1' style='pointer-events:none'>10L/s</text>
+<circle cx='72' cy='280' r='22' fill='#BA751722' stroke='#BA7517' stroke-width='2.5' style='cursor:pointer' onmouseenter='showNodeTip(event,0)' onmouseleave='hideTip()'/>
+<text x='72' y='280' text-anchor='middle' dominant-baseline='central' font-size='9' font-weight='bold' fill='#BA7517' style='pointer-events:none'>ETA</text>
+<text x='72' y='313' text-anchor='middle' font-size='11' font-weight='600' fill='#e2e8f0' style='pointer-events:none'>ETA</text>
+<text x='72' y='323' text-anchor='middle' font-size='8' fill='#475569' style='pointer-events:none'>Est. Tratamento</text>
+<circle cx='252' cy='112' r='18' fill='#3B8BD422' stroke='#3B8BD4' stroke-width='2.5' style='cursor:pointer' onmouseenter='showNodeTip(event,1)' onmouseleave='hideTip()'/>
+<rect x='249' y='107' width='6' height='8' rx='1' fill='rgba(255,255,255,0.3)' style='pointer-events:none'/>
+<text x='252' y='112' text-anchor='middle' dominant-baseline='central' font-size='9' font-weight='bold' fill='#3B8BD4' style='pointer-events:none'>RES</text>
+<text x='252' y='141' text-anchor='middle' font-size='11' font-weight='600' fill='#e2e8f0' style='pointer-events:none'>RES-1</text>
+<text x='252' y='151' text-anchor='middle' font-size='8' fill='#475569' style='pointer-events:none'>Reserv. Norte</text>
+<circle cx='252' cy='436.8' r='18' fill='#3B8BD422' stroke='#3B8BD4' stroke-width='2.5' style='cursor:pointer' onmouseenter='showNodeTip(event,2)' onmouseleave='hideTip()'/>
+<rect x='249' y='431.8' width='6' height='8' rx='1' fill='rgba(255,255,255,0.3)' style='pointer-events:none'/>
+<text x='252' y='436.8' text-anchor='middle' dominant-baseline='central' font-size='9' font-weight='bold' fill='#3B8BD4' style='pointer-events:none'>RES</text>
+<text x='252' y='465.8' text-anchor='middle' font-size='11' font-weight='600' fill='#e2e8f0' style='pointer-events:none'>RES-2</text>
+<text x='252' y='475.8' text-anchor='middle' font-size='8' fill='#475569' style='pointer-events:none'>Reserv. Sul</text>
+<circle cx='468' cy='84' r='15' fill='#E24B4A22' stroke='#E24B4A' stroke-width='2.5' style='cursor:pointer' onmouseenter='showNodeTip(event,3)' onmouseleave='hideTip()'/>
+<text x='468' y='84' text-anchor='middle' dominant-baseline='central' font-size='9' font-weight='bold' fill='#E24B4A' style='pointer-events:none'>CRI</text>
+<text x='468' y='110' text-anchor='middle' font-size='11' font-weight='600' fill='#e2e8f0' style='pointer-events:none'>HOSPITAL</text>
+<text x='468' y='120' text-anchor='middle' font-size='8' fill='#475569' style='pointer-events:none'>Hosp. Municipal</text>
+<circle cx='468' cy='212.8' r='15' fill='#E24B4A22' stroke='#E24B4A' stroke-width='2.5' style='cursor:pointer' onmouseenter='showNodeTip(event,4)' onmouseleave='hideTip()'/>
+<text x='468' y='212.8' text-anchor='middle' dominant-baseline='central' font-size='9' font-weight='bold' fill='#E24B4A' style='pointer-events:none'>CRI</text>
+<text x='468' y='238.8' text-anchor='middle' font-size='11' font-weight='600' fill='#e2e8f0' style='pointer-events:none'>BOMBEIROS</text>
+<text x='468' y='248.8' text-anchor='middle' font-size='8' fill='#475569' style='pointer-events:none'>Bombeiros</text>
+<circle cx='468' cy='336' r='15' fill='#E24B4A22' stroke='#E24B4A' stroke-width='2.5' style='cursor:pointer' onmouseenter='showNodeTip(event,5)' onmouseleave='hideTip()'/>
+<text x='468' y='336' text-anchor='middle' dominant-baseline='central' font-size='9' font-weight='bold' fill='#E24B4A' style='pointer-events:none'>CRI</text>
+<text x='468' y='362' text-anchor='middle' font-size='11' font-weight='600' fill='#e2e8f0' style='pointer-events:none'>ESCOLA</text>
+<text x='468' y='372' text-anchor='middle' font-size='8' fill='#475569' style='pointer-events:none'>Escola Estadual</text>
+<circle cx='648' cy='156.8' r='15' fill='#63992222' stroke='#639922' stroke-width='2.5' style='cursor:pointer' onmouseenter='showNodeTip(event,6)' onmouseleave='hideTip()'/>
+<text x='648' y='156.8' text-anchor='middle' dominant-baseline='central' font-size='9' font-weight='bold' fill='#639922' style='pointer-events:none'>BAI</text>
+<text x='648' y='182.8' text-anchor='middle' font-size='11' font-weight='600' fill='#e2e8f0' style='pointer-events:none'>CENTRO</text>
+<text x='648' y='192.8' text-anchor='middle' font-size='8' fill='#475569' style='pointer-events:none'>Bairro Centro</text>
+<circle cx='648' cy='280' r='15' fill='#63992222' stroke='#639922' stroke-width='2.5' style='cursor:pointer' onmouseenter='showNodeTip(event,7)' onmouseleave='hideTip()'/>
+<text x='648' y='280' text-anchor='middle' dominant-baseline='central' font-size='9' font-weight='bold' fill='#639922' style='pointer-events:none'>BAI</text>
+<text x='648' y='306' text-anchor='middle' font-size='11' font-weight='600' fill='#e2e8f0' style='pointer-events:none'>VILA-NOVA</text>
+<text x='648' y='316' text-anchor='middle' font-size='8' fill='#475569' style='pointer-events:none'>Vila Nova</text>
+<circle cx='648' cy='403.2' r='15' fill='#63992222' stroke='#639922' stroke-width='2.5' style='cursor:pointer' onmouseenter='showNodeTip(event,8)' onmouseleave='hideTip()'/>
+<text x='648' y='403.2' text-anchor='middle' dominant-baseline='central' font-size='9' font-weight='bold' fill='#639922' style='pointer-events:none'>BAI</text>
+<text x='648' y='429.2' text-anchor='middle' font-size='11' font-weight='600' fill='#e2e8f0' style='pointer-events:none'>JD-VERDE</text>
+<text x='648' y='439.2' text-anchor='middle' font-size='8' fill='#475569' style='pointer-events:none'>Jardim Verde</text>
+<circle cx='810' cy='112' r='15' fill='#63992222' stroke='#639922' stroke-width='2.5' style='cursor:pointer' onmouseenter='showNodeTip(event,9)' onmouseleave='hideTip()'/>
+<text x='810' y='112' text-anchor='middle' dominant-baseline='central' font-size='9' font-weight='bold' fill='#639922' style='pointer-events:none'>BAI</text>
+<text x='810' y='138' text-anchor='middle' font-size='11' font-weight='600' fill='#e2e8f0' style='pointer-events:none'>COM-NORTE</text>
+<text x='810' y='148' text-anchor='middle' font-size='8' fill='#475569' style='pointer-events:none'>Comercio Norte</text>
+<circle cx='810' cy='476' r='15' fill='#63992222' stroke='#639922' stroke-width='2.5' style='cursor:pointer' onmouseenter='showNodeTip(event,10)' onmouseleave='hideTip()'/>
+<text x='810' y='476' text-anchor='middle' dominant-baseline='central' font-size='9' font-weight='bold' fill='#639922' style='pointer-events:none'>BAI</text>
+<text x='810' y='502' text-anchor='middle' font-size='11' font-weight='600' fill='#e2e8f0' style='pointer-events:none'>FAV-SUL</text>
+<text x='810' y='512' text-anchor='middle' font-size='8' fill='#475569' style='pointer-events:none'>Comunidade Sul</text>
+</svg>
+<div class='tooltip' id='tip'><div class='tt-name' id='tt-name'></div><div class='tt-row' id='tt-row1'></div><div class='tt-row' id='tt-row2'></div></div>
+</div>
+<div class='sidebar'>
+<div class='sidebar-tabs'>
+  <button class='tab-btn active' onclick='switchTab("canos",this)'>CANOS</button>
+  <button class='tab-btn' onclick='switchTab("stats",this)'>STATS</button>
+  <button class='tab-btn' onclick='switchTab("algo",this)'>ALGORITMOS</button>
+</div>
+<div class='tab-content active' id='tab-canos'>
+  <div class='sec-label'>Clique para remover / restaurar</div>
+  <div id='pipe-list'>
+    <div class='pipe-item' onclick='toggleEdge(0,1)'>
+      <div class='pipe-dot' style='background:#3B8BD4'></div>
+      <span class='pipe-name'>ETA&#8596;RES-1</span>
+      <span class='pipe-cap'>80L/s</span>
+      <span style='font-size:10px;margin-left:4px'>[on]</span>
+    </div>
+    <div class='pipe-item' onclick='toggleEdge(0,2)'>
+      <div class='pipe-dot' style='background:#3B8BD4'></div>
+      <span class='pipe-name'>ETA&#8596;RES-2</span>
+      <span class='pipe-cap'>60L/s</span>
+      <span style='font-size:10px;margin-left:4px'>[on]</span>
+    </div>
+    <div class='pipe-item' onclick='toggleEdge(1,3)'>
+      <div class='pipe-dot' style='background:#3B8BD4'></div>
+      <span class='pipe-name'>RES-1&#8596;HOSPITAL</span>
+      <span class='pipe-cap'>40L/s</span>
+      <span style='font-size:10px;margin-left:4px'>[on]</span>
+    </div>
+    <div class='pipe-item' onclick='toggleEdge(1,4)'>
+      <div class='pipe-dot' style='background:#3B8BD4'></div>
+      <span class='pipe-name'>RES-1&#8596;BOMBEIROS</span>
+      <span class='pipe-cap'>20L/s</span>
+      <span style='font-size:10px;margin-left:4px'>[on]</span>
+    </div>
+    <div class='pipe-item' onclick='toggleEdge(1,5)'>
+      <div class='pipe-dot' style='background:#3B8BD4'></div>
+      <span class='pipe-name'>RES-1&#8596;ESCOLA</span>
+      <span class='pipe-cap'>15L/s</span>
+      <span style='font-size:10px;margin-left:4px'>[on]</span>
+    </div>
+    <div class='pipe-item' onclick='toggleEdge(1,6)'>
+      <div class='pipe-dot' style='background:#3B8BD4'></div>
+      <span class='pipe-name'>RES-1&#8596;CENTRO</span>
+      <span class='pipe-cap'>50L/s</span>
+      <span style='font-size:10px;margin-left:4px'>[on]</span>
+    </div>
+    <div class='pipe-item' onclick='toggleEdge(1,9)'>
+      <div class='pipe-dot' style='background:#3B8BD4'></div>
+      <span class='pipe-name'>RES-1&#8596;COM-NORTE</span>
+      <span class='pipe-cap'>25L/s</span>
+      <span style='font-size:10px;margin-left:4px'>[on]</span>
+    </div>
+    <div class='pipe-item' onclick='toggleEdge(2,6)'>
+      <div class='pipe-dot' style='background:#3B8BD4'></div>
+      <span class='pipe-name'>RES-2&#8596;CENTRO</span>
+      <span class='pipe-cap'>40L/s</span>
+      <span style='font-size:10px;margin-left:4px'>[on]</span>
+    </div>
+    <div class='pipe-item' onclick='toggleEdge(2,7)'>
+      <div class='pipe-dot' style='background:#3B8BD4'></div>
+      <span class='pipe-name'>RES-2&#8596;VILA-NOVA</span>
+      <span class='pipe-cap'>35L/s</span>
+      <span style='font-size:10px;margin-left:4px'>[on]</span>
+    </div>
+    <div class='pipe-item' onclick='toggleEdge(2,10)'>
+      <div class='pipe-dot' style='background:#3B8BD4'></div>
+      <span class='pipe-name'>RES-2&#8596;FAV-SUL</span>
+      <span class='pipe-cap'>20L/s</span>
+      <span style='font-size:10px;margin-left:4px'>[on]</span>
+    </div>
+    <div class='pipe-item' onclick='toggleEdge(3,6)'>
+      <div class='pipe-dot' style='background:#3B8BD4'></div>
+      <span class='pipe-name'>HOSPITAL&#8596;CENTRO</span>
+      <span class='pipe-cap'>30L/s</span>
+      <span style='font-size:10px;margin-left:4px'>[on]</span>
+    </div>
+    <div class='pipe-item' onclick='toggleEdge(6,7)'>
+      <div class='pipe-dot' style='background:#3B8BD4'></div>
+      <span class='pipe-name'>CENTRO&#8596;VILA-NOVA</span>
+      <span class='pipe-cap'>25L/s</span>
+      <span style='font-size:10px;margin-left:4px'>[on]</span>
+    </div>
+    <div class='pipe-item' onclick='toggleEdge(6,8)'>
+      <div class='pipe-dot' style='background:#3B8BD4'></div>
+      <span class='pipe-name'>CENTRO&#8596;JD-VERDE</span>
+      <span class='pipe-cap'>20L/s</span>
+      <span style='font-size:10px;margin-left:4px'>[on]</span>
+    </div>
+    <div class='pipe-item' onclick='toggleEdge(7,8)'>
+      <div class='pipe-dot' style='background:#3B8BD4'></div>
+      <span class='pipe-name'>VILA-NOVA&#8596;JD-VERDE</span>
+      <span class='pipe-cap'>15L/s</span>
+      <span style='font-size:10px;margin-left:4px'>[on]</span>
+    </div>
+    <div class='pipe-item' onclick='toggleEdge(8,10)'>
+      <div class='pipe-dot' style='background:#3B8BD4'></div>
+      <span class='pipe-name'>JD-VERDE&#8596;FAV-SUL</span>
+      <span class='pipe-cap'>10L/s</span>
+      <span style='font-size:10px;margin-left:4px'>[on]</span>
+    </div>
+  </div>
+  <button class='reset-btn' onclick='resetAll()'>&#8635; Restaurar todos os canos</button>
+  <div class='sec-label' style='margin-top:4px'>Log de eventos</div>
+  <div class='log-box' id='log'>
+    <div class='log-line info'>[inicio] Rede carregada. Use o terminal para interagir.</div>
+    <div class='log-line ok'>[acao] Rede iniciada</div>
+  </div>
+</div>
+<div class='tab-content' id='tab-stats'>
+  <div class='sec-label'>Diagnostico da rede</div>
+  <div class='stat-grid'>
+    <div class='stat-card'><div class='stat-label'>CRITICOS</div><div class='stat-val stat-ok'>3/3</div></div>
+    <div class='stat-card'><div class='stat-label'>BAIRROS</div><div class='stat-val stat-ok'>5/5</div></div>
+    <div class='stat-card'><div class='stat-label'>CANOS ATIVOS</div><div class='stat-val stat-ok'>15</div></div>
+    <div class='stat-card'><div class='stat-label'>REMOVIDOS</div><div class='stat-val stat-ok'>0</div></div>
+  </div>
+  <div class='sec-label' style='margin-top:4px'>Status dos pontos</div>
+  <div class='pipe-item' style=''>
+    <div class='pipe-dot' style='background:#BA7517'></div>
+    <span class='pipe-name'>ETA</span>
+    <span style='font-size:10px;color:#22c55e'>COM AGUA</span>
+  </div>
+  <div class='pipe-item' style=''>
+    <div class='pipe-dot' style='background:#3B8BD4'></div>
+    <span class='pipe-name'>RES-1</span>
+    <span style='font-size:10px;color:#22c55e'>COM AGUA</span>
+  </div>
+  <div class='pipe-item' style=''>
+    <div class='pipe-dot' style='background:#3B8BD4'></div>
+    <span class='pipe-name'>RES-2</span>
+    <span style='font-size:10px;color:#22c55e'>COM AGUA</span>
+  </div>
+  <div class='pipe-item' style=''>
+    <div class='pipe-dot' style='background:#E24B4A'></div>
+    <span class='pipe-name'>HOSPITAL</span>
+    <span style='font-size:10px;color:#22c55e'>COM AGUA</span>
+  </div>
+  <div class='pipe-item' style=''>
+    <div class='pipe-dot' style='background:#E24B4A'></div>
+    <span class='pipe-name'>BOMBEIROS</span>
+    <span style='font-size:10px;color:#22c55e'>COM AGUA</span>
+  </div>
+  <div class='pipe-item' style=''>
+    <div class='pipe-dot' style='background:#E24B4A'></div>
+    <span class='pipe-name'>ESCOLA</span>
+    <span style='font-size:10px;color:#22c55e'>COM AGUA</span>
+  </div>
+  <div class='pipe-item' style=''>
+    <div class='pipe-dot' style='background:#639922'></div>
+    <span class='pipe-name'>CENTRO</span>
+    <span style='font-size:10px;color:#22c55e'>COM AGUA</span>
+  </div>
+  <div class='pipe-item' style=''>
+    <div class='pipe-dot' style='background:#639922'></div>
+    <span class='pipe-name'>VILA-NOVA</span>
+    <span style='font-size:10px;color:#22c55e'>COM AGUA</span>
+  </div>
+  <div class='pipe-item' style=''>
+    <div class='pipe-dot' style='background:#639922'></div>
+    <span class='pipe-name'>JD-VERDE</span>
+    <span style='font-size:10px;color:#22c55e'>COM AGUA</span>
+  </div>
+  <div class='pipe-item' style=''>
+    <div class='pipe-dot' style='background:#639922'></div>
+    <span class='pipe-name'>COM-NORTE</span>
+    <span style='font-size:10px;color:#22c55e'>COM AGUA</span>
+  </div>
+  <div class='pipe-item' style=''>
+    <div class='pipe-dot' style='background:#639922'></div>
+    <span class='pipe-name'>FAV-SUL</span>
+    <span style='font-size:10px;color:#22c55e'>COM AGUA</span>
+  </div>
+  <div class='sec-label' style='margin-top:4px'>Ultima acao</div>
+  <div class='log-box'><div class='log-line ok'>Rede iniciada</div><div class='log-line info'>Todos os pontos abastecidos.</div></div>
+</div>
+<div class='tab-content' id='tab-algo'>
+  <div class='sec-label'>Resultados dos algoritmos</div>
+  <div class='algo-output'><span class='ao-title'>Rede iniciada</span>
+
+Status atual (BFS):
+<span class='ao-ok'>  [OK] RES-1</span>
+<span class='ao-ok'>  [OK] RES-2</span>
+<span class='ao-ok'>  [OK] HOSPITAL [CRITICO]</span>
+<span class='ao-ok'>  [OK] BOMBEIROS [CRITICO]</span>
+<span class='ao-ok'>  [OK] ESCOLA [CRITICO]</span>
+<span class='ao-ok'>  [OK] CENTRO</span>
+<span class='ao-ok'>  [OK] VILA-NOVA</span>
+<span class='ao-ok'>  [OK] JD-VERDE</span>
+<span class='ao-ok'>  [OK] COM-NORTE</span>
+<span class='ao-ok'>  [OK] FAV-SUL</span>
+
+Todos os pontos abastecidos.</div>
+  <div class='sec-label' style='margin-top:4px'>Legenda</div>
+  <div class='legend'>
+    <div class='leg-item'><div class='leg-pipe' style='background:#3B8BD4'></div>Cano ativo com fluxo</div>
+    <div class='leg-item'><div class='leg-pipe' style='background:#a855f7'></div>Rota Dijkstra</div>
+    <div class='leg-item'><div class='leg-pipe' style='background:#7f1d1d;border:1px dashed #ef4444'></div>Cano removido</div>
+    <div class='leg-item'><div class='leg-dot' style='background:#BA7517'></div>Estacao (ETA)</div>
+    <div class='leg-item'><div class='leg-dot' style='background:#3B8BD4'></div>Reservatorio</div>
+    <div class='leg-item'><div class='leg-dot' style='background:#E24B4A'></div>Local critico</div>
+    <div class='leg-item'><div class='leg-dot' style='background:#639922'></div>Bairro</div>
+    <div class='leg-item'><div class='leg-dot' style='background:#6b7280'></div>Sem abastecimento</div>
+  </div>
+  <div style='font-size:10px;color:#475569;text-align:center;padding:8px;margin-top:auto;border-top:1px solid #2a2a4a'>Volte ao terminal para interagir.<br>O mapa atualiza a cada acao.</div>
+</div>
+</div>
+</div>
+<script>
+const NODES=[
+  {id:0,nome:'ETA',desc:'Est. Tratamento',tipo:'fonte',x:72,y:280,cor:'#BA7517'},
+  {id:1,nome:'RES-1',desc:'Reserv. Norte',tipo:'reservatorio',x:252,y:112,cor:'#3B8BD4'},
+  {id:2,nome:'RES-2',desc:'Reserv. Sul',tipo:'reservatorio',x:252,y:436.8,cor:'#3B8BD4'},
+  {id:3,nome:'HOSPITAL',desc:'Hosp. Municipal',tipo:'critico',x:468,y:84,cor:'#E24B4A'},
+  {id:4,nome:'BOMBEIROS',desc:'Bombeiros',tipo:'critico',x:468,y:212.8,cor:'#E24B4A'},
+  {id:5,nome:'ESCOLA',desc:'Escola Estadual',tipo:'critico',x:468,y:336,cor:'#E24B4A'},
+  {id:6,nome:'CENTRO',desc:'Bairro Centro',tipo:'bairro',x:648,y:156.8,cor:'#639922'},
+  {id:7,nome:'VILA-NOVA',desc:'Vila Nova',tipo:'bairro',x:648,y:280,cor:'#639922'},
+  {id:8,nome:'JD-VERDE',desc:'Jardim Verde',tipo:'bairro',x:648,y:403.2,cor:'#639922'},
+  {id:9,nome:'COM-NORTE',desc:'Comercio Norte',tipo:'bairro',x:810,y:112,cor:'#639922'},
+  {id:10,nome:'FAV-SUL',desc:'Comunidade Sul',tipo:'bairro',x:810,y:476,cor:'#639922'},
+];
+const EDGES=[
+  {u:0,v:1,cap:80,rem:false},
+  {u:0,v:2,cap:60,rem:false},
+  {u:1,v:3,cap:40,rem:false},
+  {u:1,v:4,cap:20,rem:false},
+  {u:1,v:5,cap:15,rem:false},
+  {u:1,v:6,cap:50,rem:false},
+  {u:1,v:9,cap:25,rem:false},
+  {u:2,v:6,cap:40,rem:false},
+  {u:2,v:7,cap:35,rem:false},
+  {u:2,v:10,cap:20,rem:false},
+  {u:3,v:6,cap:30,rem:false},
+  {u:6,v:7,cap:25,rem:false},
+  {u:6,v:8,cap:20,rem:false},
+  {u:7,v:8,cap:15,rem:false},
+  {u:8,v:10,cap:10,rem:false},
+];
+
+const tip=document.getElementById('tip');
+const canvas=document.getElementById('canvas');
+
+function rNo(tipo){ return tipo==='fonte'?22:tipo==='reservatorio'?18:15; }
+
+function moveTip(ev){
+  const r=canvas.getBoundingClientRect();
+  tip.style.left=(ev.clientX-r.left+14)+'px';
+  tip.style.top=(ev.clientY-r.top+14)+'px';
+}
+function hideTip(){ tip.style.display='none'; }
+
+function showNodeTip(ev,id){
+  const n=NODES[id];
+  const ok=n.tipo==='fonte'||document.querySelector('[data-id="'+id+'"]');
+  document.getElementById('tt-name').textContent=n.nome;
+  document.getElementById('tt-row1').textContent='Tipo: '+n.tipo;
+  document.getElementById('tt-row2').textContent=n.desc;
+  tip.style.display='block'; moveTip(ev);
+}
+function showEdgeTip(ev,u,v,cap){
+  document.getElementById('tt-name').textContent=NODES[u].nome+' ↔ '+NODES[v].nome;
+  document.getElementById('tt-row1').textContent='Capacidade: '+cap+' L/s';
+  document.getElementById('tt-row2').textContent='Clique para remover/restaurar';
+  tip.style.display='block'; moveTip(ev);
+}
+canvas.addEventListener('mousemove',ev=>{
+  if(tip.style.display==='block') moveTip(ev);
+});
+
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function addLog(msg,cls){
+  const box=document.getElementById('log');
+  if(!box) return;
+  const ts=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const d=document.createElement('div');
+  d.className='log-line '+(cls||'info');
+  d.textContent='['+ts+'] '+msg;
+  box.insertBefore(d,box.firstChild);
+  if(box.children.length>20) box.removeChild(box.lastChild);
+}
+
+function toggleEdge(u,v){
+  addLog('Acao registrada: use o terminal para remover/restaurar canos.','warn');
+}
+function resetAll(){
+  addLog('Use opcao 9 no terminal para restaurar todos os canos.','warn');
+}
+</script>
+</body>
+</html>
