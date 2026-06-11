@@ -32,3 +32,6 @@ Projeto prático de **Estrutura de Dados (Teoria de Grafos)** que simula uma red
 - **Bloco 5 (Linhas 220-272):** Inteligência e Otimização do Algoritmo de Dijkstra.
 - **Bloco 6 (Linhas 280-480):** Motor de Renderização e Escrita do Arquivo HTML/SVG.
 - **Bloco 7 (Linhas 504 ao Fim):** Instanciação da Cidade, Orquestração e Menu Principal.
+
+- <img width="790" height="695" alt="image" src="https://github.com/user-attachments/assets/5befabc6-0634-4a93-bdec-e76942f9affd" />
+
