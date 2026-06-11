@@ -14,7 +14,7 @@ Projeto prático de **Estrutura de Dados (Teoria de Grafos)** que simula uma red
 
 ### 🛠️ Interface do Terminal (Painel de Controle C++)
 
-![Interface do Terminal C++]
+Interface do Terminal C++
 
 <img width="729" height="696" alt="image" src="https://github.com/user-attachments/assets/b6e8c413-6a30-472a-92b9-4bba56d25c09" />
 
@@ -23,7 +23,7 @@ Console nativo em CPU para controle operacional da malha através de menu numér
 
 ### 💧 Interface Gráfica Dinâmica (Monitor HTML/SVG)
 
-![Monitor de Rede HTML/SVG]
+Monitor de Rede HTML/SVG
 <img width="1581" height="735" alt="image" src="https://github.com/user-attachments/assets/3e79e465-ef60-461f-9ec2-168cb0c70a78" />
 
 
