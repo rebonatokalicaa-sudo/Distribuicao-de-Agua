@@ -14,14 +14,16 @@ Projeto prático de **Estrutura de Dados (Teoria de Grafos)** que simula uma red
 
 ### 🛠️ Interface do Terminal (Painel de Controle C++)
 
-![Interface do Terminal C++](<img width="744" height="710" alt="image" src="https://github.com/user-attachments/assets/f9e94e77-0ca2-4106-9043-8b8122d44dd6" />)
+![Interface do Terminal C++]
+<img width="729" height="696" alt="image" src="https://github.com/user-attachments/assets/b6e8c413-6a30-472a-92b9-4bba56d25c09" />
+
 
 Console nativo em CPU para controle operacional da malha através de menu numérico. O destaque é a **Opção 12**, que edita pesos (tempo) e capacidades (vazão) de canos ao vivo, forçando o recálculo imediato do sistema antes dos diagnósticos estruturais.
 
 ### 💧 Interface Gráfica Dinâmica (Monitor HTML/SVG)
 
-![Monitor de Rede HTML/SVG](<img width="1586" height="756" alt="image" src="https://github.com/user-attachments/assets/e1690367-770d-4301-a41e-643d5deae6d3" />
-)
+![Monitor de Rede HTML/SVG]
+<img width="1581" height="735" alt="image" src="https://github.com/user-attachments/assets/3e79e465-ef60-461f-9ec2-168cb0c70a78" />
 
 
 Visualização síncrona gerada de forma autônoma pelo C++ via arquivo `.html`. Exibe o estado lógico da memória RAM em tempo real: nós ativos validados pelo BFS, pulsação de emergência em locais críticos desabastecidos, linhas roxas com o caminho mínimo do Dijkstra e tracejados vermelhos indicando canos rompidos.
